@@ -9,22 +9,10 @@ from datetime import timedelta, timezone, datetime
 import os
 from dataclasses import *
 from typing import Any
+from .models import Libros, Categorias
+
 
 # Create your tests here.
-
-@dataclass
-class categoria():
-    nombre          :str = 'SIN NOMBRE'
-    libros          :Any = field(default_factory=list)a
-
-@dataclass
-class libro():
-    src_img        :str = '' 
-    titulo         :str = '' 
-    precio         :str = '' 
-    stock          :str = '' 
-    info_upc       :str = '' 
-    desc_prod      :str = '' 
 
 @dataclass
 class el_tejedor():
@@ -50,43 +38,66 @@ class el_tejedor():
         else:
             return False 
 
+    def tratar_get(self, url):
+        try :
+            return self.session.get(self.url+url, verify=False).content
+        except:
+            self.session = requests.Session()
+            self.session.headers = {"User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_12_5) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/59.0.3071.109 Safari/537.36"}
+            return self.tratar_get(url)
+
+
     def tejer(self):
         for c in self.traer_categorias():
-            print (c.text.strip())
-            print (c['href'])
+            nombre_categoria=c.text.strip()
+            print (nombre_categoria)
+            url_categoria=c['href']
+            if not Categorias.objects.filter(nombre_categoria=nombre_categoria).exists():
+                Categorias.objects.create(nombre_categoria=nombre_categoria,url=url_categoria)
             for l in self.traer_libros_categorias(c['href']):
-                 self.traer_info_libro((l.find('h3').a['href'][9:]))
+                libro   = self.traer_info_libro((l.find('h3').a['href'][9:]),nombre_categoria)
+                print(libro['titulo'])
+                if not Libros.objects.filter(titulo=libro['titulo']).exists() :
+                    Libros.objects.create(**libro)
 
     def traer_categorias(self):
-        content = self.session.get(self.url, verify=False).content
+        content = self.tratar_get('')
         soup = BeautifulSoup(content, "html.parser")
         categorias = soup.find_all('ul',{'class':'nav nav-list'})[0].find_all('a')
         return categorias[1:]
 
-    def traer_libros_categorias(self, url_categoria):
-        content = self.session.get(self.url+url_categoria, verify=False).content
-        soup = BeautifulSoup(content, "html.parser")
-        libros = soup.find_all('ol',{'class':'row'})[0].find_all('li')
+    def traer_libros_categorias(self, url_categoria, url_pagina_sgte='',libros=[]):
+        if url_pagina_sgte=='':
+            content = self.tratar_get(url_categoria)
+        else:
+            content = self.tratar_get(url_pagina_sgte)
+        soup    = BeautifulSoup(content, "html.parser")
+        pagina  = soup.find('li',{'class':'next'})
+        libros  = libros+soup.find_all('ol',{'class':'row'})[0].find_all('li')
+        if pagina is not None:
+            url_sgte_pagina         =   pagina.a['href']
+            url_sgte_pagina_final   =   url_categoria.replace('index.html','')+url_sgte_pagina
+            libros_sgte_pg=self.traer_libros_categorias(url_categoria,url_sgte_pagina_final,libros)
+            return  libros_sgte_pg
         return libros
-        # libro = libros[0]
-        #url=libro  =libro.find('h3').a['href']
 
-    def traer_info_libro(self,url_libro):
-        print (url_libro)
-        content = self.session.get(self.url+'catalogue/'+url_libro, verify=False).content
-        soup = BeautifulSoup(content, "html.parser")
-        info_prodcuto   = soup.find_all('div',{'class':'col-sm-6 product_main'})[0]
-        info_imagen     = soup.find('div',{'class':'thumbnail'
-        src_img         =   info_imagen.div.img['src']   
-        titulo          =   info_prodcuto.h1.text
-        precio          =   info_prodcuto.p.text
-        stock           =   info_prodcuto.find('p',{'class':'instock availability'}).text.strip()
+    def traer_info_libro(self,url_libro, categoria=''):
+        content         =   self.tratar_get('catalogue/'+url_libro)
+        soup            =   BeautifulSoup(content, "html.parser")
+        info_prodcuto   =   soup.find_all('div',{'class':'col-sm-6 product_main'})[0]
         info_upc        =   soup.find('table',{'class':'table table-striped'}).find_all('tr')
-        desc_prod       =   soup.find_all('p')[3]
-        #   print (info_upc)
-        obj_UPC= [obj for obj in info_upc if obj.th.text=='UPC']
-        print (titulo)
+        obj_UPC         =   [obj for obj in info_upc if obj.th.text=='UPC']
+        info_imagen     =   soup.find('div',{'class':'thumbnail'})
+        return {
+        'categoria'             : Categorias.objects.get(nombre_categoria=categoria),
+        'titulo'                : info_prodcuto.h1.text,
+        'miniatura_url'         : info_imagen.div.img['src'],
+        'precio'                : info_prodcuto.p.text.replace("£", ""),
+        'cantidad'              : info_prodcuto.find('p',{'class':'instock availability'}).text.strip(),
+        'libro_descripcion'     : soup.find_all('p')[3].text,
+        'upc'                   : obj_UPC[0].td.text,
+        }
 
-
-t=el_tejedor(url='http://books.toscrape.com/')
-t.tejer()
+class intentar_tejer(TestCase):
+    t=el_tejedor(url='http://books.toscrape.com/')
+    t.tejer()
