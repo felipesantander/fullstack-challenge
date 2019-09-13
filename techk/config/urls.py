@@ -19,6 +19,7 @@ from django.urls import path
 #from apps.base.views import index
 from apps.base.views import UserViewSet
 from rest_framework import routers
+from django.views import generic
 router = routers.DefaultRouter()
 
 router.register(r'users', UserViewSet)
@@ -27,7 +28,7 @@ router.register(r'users', UserViewSet)
 urlpatterns = [
     url(r'^admin/', admin.site.urls),
     url(r'^', include(router.urls)),
-  #  url(r'', index),
+    url(r'view/', generic.TemplateView.as_view(template_name='view1.html')),
     #path(r'tejedor/libros/<string:categoria>/', ''),
     path(r'rest/', include('apps.rest.urls')),
     url(r'^api-auth/', include('rest_framework.urls')),

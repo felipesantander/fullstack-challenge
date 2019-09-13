@@ -38,6 +38,7 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
     'rest_framework',
+    'corsheaders',
     'webpack_loader',
     'apps.base',
     'apps.rest',
@@ -59,7 +60,7 @@ ROOT_URLCONF = 'config.urls'
 TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
-        'DIRS': [],
+        'DIRS': [os.path.join(BASE_DIR, 'apps/base/templates')],
         'APP_DIRS': True,
         'OPTIONS': {
             'context_processors': [
@@ -92,6 +93,17 @@ REST_FRAMEWORK = {
        'rest_framework.permissions.AllowAny'
     ],
     'DEFAULT_FILTER_BACKENDS': ['django_filters.rest_framework.DjangoFilterBackend']
+}
+
+CORS_ORIGIN_WHITELIST = (
+    'http://localhost:8000',
+)
+
+WEBPACK_LOADER = {
+    'DEFAULT': {
+        'BUNDLE_DIR_NAME': 'bundles/local/',  # end with slash
+        'STATS_FILE': os.path.join(BASE_DIR, 'front/webpack-stats-local.json'),
+    }
 }
 
 # Password validation
@@ -131,3 +143,9 @@ USE_TZ = True
 # https://docs.djangoproject.com/en/1.11/howto/static-files/
 
 STATIC_URL = '/static/'
+STATIC_ROOT = os.path.join(BASE_DIR, 'static')
+
+STATICFILES_DIRS = [
+    os.path.join(BASE_DIR, 'apps/base/static'),
+    os.path.join(BASE_DIR, 'front/workshop/static'),
+]
