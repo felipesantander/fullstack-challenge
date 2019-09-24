@@ -1,13 +1,7 @@
 import React from "react"
-import Headline from "../Headline"
-import { makeStyles } from '@material-ui/core/styles';
-import Card from '@material-ui/core/Card';
-import CardActionArea from '@material-ui/core/CardActionArea';
-import CardActions from '@material-ui/core/CardActions';
-import CardContent from '@material-ui/core/CardContent';
-import CardMedia from '@material-ui/core/CardMedia';
-import Button from '@material-ui/core/Button';
-import Typography from '@material-ui/core/Typography';
+import CardBook from "../CardBook"
+import RowCategory from "../RowCategory"
+import MyAppBar from "../MyAppBar"
 
 // export default class App extends React.Component {
 //   render() {
@@ -32,58 +26,34 @@ import Typography from '@material-ui/core/Typography';
 //     </div>
 //   ))}
 
+{/* <div>
+{this.state.todos.map(item => (
+  <div key={item.id}>
+      <CardBook titulo={item.titulo} descipcion={item.libro_descripcion} cantidad={item.cantidad} src_imagen={item.miniatura_url} ></CardBook>
+  </div>
+))}
+</div> 
+ */}
 
-
-const useStyles = makeStyles({
-  card: {
-    maxWidth: 345,
-  },
-  media: {
-    height: 140,
-  },
-});
-
-function MediaCard() {
-  const classes = useStyles();
-
-  return (
-    <Card className={classes.card}>
-      <CardActionArea>
-        <CardMedia
-          className={classes.media}
-          image="/static/images/cards/contemplative-reptile.jpg"
-          title="Contemplative Reptile"
-        />
-        <CardContent>
-          <Typography gutterBottom variant="h5" component="h2">
-            Lizard
-          </Typography>
-          <Typography variant="body2" color="textSecondary" component="p">
-            Lizards are a widespread group of squamate reptiles, with over 6,000 species, ranging
-            across all continents except Antarctica
-          </Typography>
-        </CardContent>
-      </CardActionArea>
-      <CardActions>
-        <Button size="small" color="primary">
-          Share
-        </Button>
-        <Button size="small" color="primary">
-          Learn More
-        </Button>
-      </CardActions>
-    </Card>
-  );
-} 
-
-
-export default class App extends React.Component {
+export default class App extends React.Component {  
+  constructor(props) {
+    super(props);
+    this.es_libro= {v_libro: props.esLibro, id: props.id, nombre_categoria:props.nombre_categoria, url : props.url};
+  }
     state = {
         todos: []
       }; 
       async componentDidMount() {
         try {
-          const res = await fetch('http://127.0.0.1:8000/rest/libros/categoria/1');
+          var ask_url = 'http://127.0.0.1:8000/rest/categorias/';
+          if(this.es_libro.v_libro!=undefined) {
+                ask_url= 'http://127.0.0.1:8000/rest/libros/categoria/'+this.es_libro.id;
+              }
+              else{
+                this.es_libro.v_libro= false;
+                ask_url='http://127.0.0.1:8000/rest/categorias/';
+              }
+          const res = await fetch(ask_url);
           const todos = await res.json();
           this.setState({
             todos
@@ -95,9 +65,9 @@ export default class App extends React.Component {
       render() {
         return (
             <div>
-             <Headline>hola</Headline>
-          </div>
-            
+              <MyAppBar estado={this.es_libro}></MyAppBar> 
+              <RowCategory categorias={this.state.todos} esLibro={this.es_libro.v_libro} ></RowCategory>
+            </div>
         );
       }
   }

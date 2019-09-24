@@ -20,6 +20,7 @@ from django.urls import path
 from apps.base.views import UserViewSet
 from rest_framework import routers
 from django.views import generic
+from apps.scraper.views import tejer_categorias,tejer_libros_categoria
 router = routers.DefaultRouter()
 
 router.register(r'users', UserViewSet)
@@ -29,7 +30,8 @@ urlpatterns = [
     url(r'^admin/', admin.site.urls),
     url(r'^', include(router.urls)),
     url(r'view/', generic.TemplateView.as_view(template_name='view1.html')),
-    #path(r'tejedor/libros/<string:categoria>/', ''),
+    path(r'tejedor/categorias', tejer_categorias),
+    path(r'tejedor/categorias/url="<str:url_categoria>"', tejer_libros_categoria),
     path(r'rest/', include('apps.rest.urls')),
     url(r'^api-auth/', include('rest_framework.urls')),
 ]

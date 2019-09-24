@@ -46,6 +46,14 @@ class el_tejedor():
             self.session.headers = {"User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_12_5) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/59.0.3071.109 Safari/537.36"}
             return self.tratar_get(url)
 
+    def tejer_categorias(self):
+        for c in self.traer_categorias():
+            nombre_categoria=c.text.strip()
+            print (nombre_categoria)
+            url_categoria=c['href']
+            if not Categorias.objects.filter(nombre_categoria=nombre_categoria).exists():
+                Categorias.objects.create(nombre_categoria=nombre_categoria,url=url_categoria)
+
 
     def tejer(self):
         for c in self.traer_categorias():
@@ -100,4 +108,4 @@ class el_tejedor():
 
 class intentar_tejer(TestCase):
     t=el_tejedor(url='http://books.toscrape.com/')
-    t.tejer()
+    t.tejer_categorias()
